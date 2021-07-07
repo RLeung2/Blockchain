@@ -1,7 +1,8 @@
 import threading
 from queue import Queue
-import time
+from func_timeout import func_set_timeout
 from Blockchain import Blockchain
+import func_timeout
 
 """
     Exercise 5: Decentralizing the blockchain
@@ -27,17 +28,19 @@ class MyThread(threading.Thread):
 
     def run(self):
         # Start a new blockchain to mine
-        blockchain = Blockchain()
+        blockchain_obj = Blockchain()
         global stop_threads
 
-        while blockchain.size() < 10:
+        while blockchain_obj.size() < 10:
             # If stop_threads is True, then a thread has finished mining the entire chain
             if stop_threads:
                 break
 
-            # The thread will be given 6 seconds to mine a block
-            blockchain.mine_the_next_block(str(self.thread_id))
-            time.sleep(6)
+            # The thread will be given 3 seconds to mine a block
+            try:
+                self.timeout_mine(blockchain_obj)
+            except func_timeout.FunctionTimedOut:
+                pass
 
             # Send the blockchain from the current thread to all other threads in the threads dictionary
             global threads
@@ -46,24 +49,30 @@ class MyThread(threading.Thread):
                 if thread_id == self.thread_id:
                     continue
                 queue, thread = threads[thread_id]
-                queue.put(blockchain)
+                queue.put(blockchain_obj)
             # If a blockchain is in the queue, it will be checked
             if not self.queue.empty():
                 received_chain = self.queue.get(block=False)
-                if Blockchain.verify_chain(received_chain.blockchain) and received_chain.size() > blockchain.size():
-                    blockchain.set_chain(received_chain.blockchain)
+                if Blockchain.verify_chain(received_chain.blockchain) and received_chain.size() > blockchain_obj.size():
+                    blockchain_obj.set_chain(received_chain.blockchain)
+                    blockchain_obj.set_hash_list(received_chain.hash_list)
 
             # If an entire chain of length 10 has been mined, set the global variable and let all the threads know
             # to stop.
-            if blockchain.size() == 10:
+            if blockchain_obj.size() == 10:
                 global completed_chain
-                completed_chain = blockchain.blockchain
+                completed_chain = blockchain_obj.blockchain
                 stop_threads = True
+
+    # Function used to mine with a time constraint, currently set to 3 seconds
+    @func_set_timeout(3)
+    def timeout_mine(self, blockchain_obj):
+        blockchain_obj.mine_the_next_block(str(self.thread_id))
 
 
 if __name__ == "__main__":
     # Create K number of threads
-    for i in range(7):
+    for i in range(10):
         try:
             thread_name = "Thread-" + str(i)
             q = Queue()
@@ -76,23 +85,11 @@ if __name__ == "__main__":
 
     print("Threads Started")
 
-    # Obtain threads from the dictionary
+    # Obtain thread from the dictionary
     thread0 = threads[0][1]
-    thread1 = threads[1][1]
-    thread2 = threads[2][1]
-    thread3 = threads[3][1]
-    thread4 = threads[4][1]
-    thread5 = threads[5][1]
-    thread6 = threads[6][1]
 
     # Wait for all threads to finish before continuing
     thread0.join()
-    thread1.join()
-    thread2.join()
-    thread3.join()
-    thread4.join()
-    thread5.join()
-    thread6.join()
 
     for chain in completed_chain:
         print(chain)

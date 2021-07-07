@@ -17,7 +17,7 @@ class Blockchain:
         Given an input string of at most 70 characters, this function generates padding on the right
         such that the padded string is 100 characters in length and its SHA256 hash starts with “0000”.
         This is done by repeatedly randomly generating a nonce using all alphanumeric characters until
-        one if found that satisfies the condition of the padded string's SHA256 hash starting with "0000".
+        one is found that satisfies the condition of the padded string's SHA256 hash starting with "0000".
     """
     def generate_nonce(self, string):
         # If the string is greater than 70 characters, no nonce is returned
@@ -92,35 +92,38 @@ class Blockchain:
     def size(self):
         return len(self.blockchain)
 
-    def get_chain(self):
-        return self.blockchain
-
     def set_chain(self, chain):
         self.blockchain = chain
 
+    def set_hash_list(self, hash_list):
+        self.hash_list = hash_list
 
 if __name__ == "__main__":
     test_block = Blockchain()
 
+    # Test finding the nonce
     test_string = "3"
     test_nonce = test_block.generate_nonce(test_string)
     print("Nonce for the string '3':")
     print(test_nonce)
     print()
 
+    # Test the average time to find the nonce
     start_time = time.time()
-    for i in range(10):
+    for i in range(5):
         test_nonce = test_block.generate_nonce(test_string)
     total_time = time.time() - start_time
-    average_time = total_time / 10
+    average_time = total_time / 5
     print("Average time to find the nonce:")
     print(str(average_time) + " seconds")
     print()
 
+    # Test mining 10 blocks and the verification
     for i in range(10):
         test_block.mine_the_next_block('0')
     print("Blockchain:")
-    print(test_block.blockchain)
+    for chain in test_block.blockchain:
+        print(chain)
     print()
     print("Blockchain Verification:")
     print(test_block.verify_chain(test_block.blockchain))
