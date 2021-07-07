@@ -48,11 +48,10 @@ class Blockchain:
             nonce: An alphanumeric string.
             miner: An integer number which is always 0 in this exercise.
     """
-    def mine_the_next_block(self):
+    def mine_the_next_block(self, miner):
         # If the first block has yet to be mined, we consider the special case of generating the 99 length nonce
         # Hash for the first block: SHA256(miner + nonce)
         if not self.blockchain:
-            miner = '0'
             nonce = self.generate_nonce(miner)
             self.blockchain.append({"nonce": nonce, "miner": miner})
 
@@ -64,7 +63,7 @@ class Blockchain:
             # The previous hash is needed to mine every block after the first one
             # Hash for every block after the first: SHA256(previous_hash + miner + nonce)
             previous_sha256 = self.hash_list[-1]
-            current_miner = '0'
+            current_miner = miner
             current_nonce = self.generate_nonce(previous_sha256 + current_miner)
             self.blockchain.append({"nonce": current_nonce, "miner": current_miner})
 
@@ -90,6 +89,15 @@ class Blockchain:
             previous_hash = current_sha256_hash
         return True
 
+    def size(self):
+        return len(self.blockchain)
+
+    def get_chain(self):
+        return self.blockchain
+
+    def set_chain(self, chain):
+        self.blockchain = chain
+
 
 if __name__ == "__main__":
     test_block = Blockchain()
@@ -110,7 +118,7 @@ if __name__ == "__main__":
     print()
 
     for i in range(10):
-        test_block.mine_the_next_block()
+        test_block.mine_the_next_block('0')
     print("Blockchain:")
     print(test_block.blockchain)
     print()

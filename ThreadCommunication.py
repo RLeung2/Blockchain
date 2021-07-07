@@ -11,6 +11,7 @@ stop_threads = False
 
 
 class MyThread(threading.Thread):
+
     def __init__(self, queue, thread_id, name):
         super().__init__()
         self.thread_id = thread_id
